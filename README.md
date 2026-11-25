@@ -5,7 +5,7 @@ A browser-based 3D arcade racing game built with **React, Vite, Three.js, React 
 ## Features
 
 - Real-time 3D highway scene with perspective camera, lighting, fog, road markings and roadside scenery.
-- Rapier WASM rigid-body chassis with gravity, collision geometry, force-driven lateral handling, yaw torque and tire-grip damping.
+- Rapier WASM four-wheel raycast vehicle controller with suspension rays, spring stiffness, compression/rebound damping, tire grip, rear-wheel drive, front-wheel steering, braking and aerodynamic drag.
 - Detailed glTF concept-car asset from the Vinish.dev Sport Sedan GLB (CC BY 4.0; attribution below).
 - Responsive steering, acceleration, braking and nitro boost.
 - Traffic vehicles, collision detection, near-miss bonuses, score and distance tracking.
@@ -16,7 +16,7 @@ A browser-based 3D arcade racing game built with **React, Vite, Three.js, React 
 
 ## Vehicle physics and 3D asset
 
-The player vehicle uses Rapier through `@react-three/rapier` for a dynamic chassis, gravity, collision geometry and force/torque-based handling. This is a lightweight arcade-sim tire-force model, not a full professional four-wheel raycast simulator.
+The player vehicle uses Rapier through `@react-three/rapier` with its Bullet-style `DynamicRayCastVehicleController`: four raycast wheels, spring suspension, compression/relaxation damping, tire friction, front steering, rear-wheel engine force, braking and aerodynamic drag. The highway presentation remains endless-runner style, while the chassis and wheel contact/handling are physics-driven.
 
 The player car uses the detailed **Sport Sedan** glTF model by vinish.dev. It includes a detailed exterior, cabin, and four separate wheel nodes that are animated and steered in-game. It is an original unbranded design, not a replica of a specific manufacturer model. Licensed CC BY 4.0. Asset source: https://vinish.dev/free-3d-models/realistic-cars. Credit: “Sport Sedan” by vinish.dev, CC BY 4.0.
 
