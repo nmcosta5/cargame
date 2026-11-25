@@ -43,7 +43,7 @@ function CarModel({ color = '#c8ff4d', player = false, steer = 0 }) {
   )
 }
 function Roadside() {
-  const items = useMemo(() => Array.from({ length: 120 }, (_, i) => ({
+  const items = useMemo(() => Array.from({ length: 360 }, (_, i) => ({
     z: -i * 4.2 - 4,
     side: i % 2 ? 1 : -1,
     x: 8.5 + (i % 4) * 1.9,
@@ -59,8 +59,8 @@ function Roadside() {
 }
 
 function Road({ motion }) {
-  const dashes = useMemo(() => Array.from({ length: 84 }, (_, i) => -i * 6), [])
-  const lights = useMemo(() => Array.from({ length: 63 }, (_, i) => -i * 8 - 2), [])
+  const dashes = useMemo(() => Array.from({ length: 252 }, (_, i) => -i * 6), [])
+  const lights = useMemo(() => Array.from({ length: 189 }, (_, i) => -i * 8 - 2), [])
   const world = useRef()
   const offset = useRef(0)
   useFrame((_, delta) => {
@@ -79,7 +79,7 @@ function Road({ motion }) {
     {[-6.65, 6.65].map(x => <mesh key={'shoulder'+x} position={[x, -0.005, -78]}><boxGeometry args={[0.78, 0.025, 2000]} /><meshStandardMaterial color="#777d78" roughness={1} /></mesh>)}
     {[-7.25, 7.25].map(x => <group key={'rail'+x}>
       <mesh position={[x, 0.82, -78]}><boxGeometry args={[0.12, 0.16, 2000]} /><meshStandardMaterial color="#9aa4a4" metalness={0.78} roughness={0.32} /></mesh>
-      {Array.from({length:324},(_,i)=><mesh key={i} position={[x,0.42,-i*6.2-4]}><boxGeometry args={[0.16,0.82,0.16]} /><meshStandardMaterial color="#687579" metalness={0.65} /></mesh>)}
+      {Array.from({length:320},(_,i)=><mesh key={i} position={[x,0.42,-i*6.3-4]}><boxGeometry args={[0.16,0.82,0.16]} /><meshStandardMaterial color="#687579" metalness={0.65} /></mesh>)}
       <mesh position={[x, 0.93, -78]}><boxGeometry args={[0.19, 0.055, 2000]} /><meshStandardMaterial color="#d3d9d6" metalness={0.85} roughness={0.25} /></mesh>
     </group>)}
     {[-2, 2].map(x => dashes.map((z, i) => <mesh key={x + '-' + i} position={[x, 0.035, z]}><boxGeometry args={[0.075, 0.035, 2.7]} /><meshBasicMaterial color="#d8ded5" /></mesh>))}
