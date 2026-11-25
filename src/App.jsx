@@ -75,7 +75,13 @@ function Road({ motion }) {
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -78]} receiveShadow>
       <planeGeometry args={[12.2, 220]} /><meshStandardMaterial color="#30383d" roughness={0.9} />
     </mesh>
-    {[-6.15, 6.15].map(x => <mesh key={x} position={[x, 0.04, -78]}><boxGeometry args={[0.18, 0.08, 220]} /><meshStandardMaterial color="#d7d0b6" /></mesh>)}
+    {[-6.15, 6.15].map(x => <mesh key={x} position={[x, 0.04, -78]}><boxGeometry args={[0.18, 0.08, 220]} /><meshStandardMaterial color="#e6e0ca" /></mesh>)}
+    {[-6.65, 6.65].map(x => <mesh key={'shoulder'+x} position={[x, -0.005, -78]}><boxGeometry args={[0.78, 0.025, 220]} /><meshStandardMaterial color="#777d78" roughness={1} /></mesh>)}
+    {[-7.25, 7.25].map(x => <group key={'rail'+x}>
+      <mesh position={[x, 0.82, -78]}><boxGeometry args={[0.12, 0.16, 220]} /><meshStandardMaterial color="#9aa4a4" metalness={0.78} roughness={0.32} /></mesh>
+      {Array.from({length:36},(_,i)=><mesh key={i} position={[x,0.42,-i*6.2-4]}><boxGeometry args={[0.16,0.82,0.16]} /><meshStandardMaterial color="#687579" metalness={0.65} /></mesh>)}
+      <mesh position={[x, 0.93, -78]}><boxGeometry args={[0.19, 0.055, 220]} /><meshStandardMaterial color="#d3d9d6" metalness={0.85} roughness={0.25} /></mesh>
+    </group>)}
     {[-2, 2].map(x => dashes.map((z, i) => <mesh key={x + '-' + i} position={[x, 0.035, z]}><boxGeometry args={[0.075, 0.035, 2.7]} /><meshBasicMaterial color="#d8ded5" /></mesh>))}
     {lights.map((z, i) => [-1, 1].map(side => <group key={i + '-' + side} position={[side * 7.8, 0, z]}>
       <mesh position={[0, 1.5, 0]}><cylinderGeometry args={[0.055, 0.08, 3, 8]} /><meshStandardMaterial color="#647178" metalness={0.7} /></mesh>
@@ -118,7 +124,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
   if (traffic.current.length === 0) traffic.current = laneTraffic
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.04)
-    if (!active) return
+    if (!active) { roadMotion.current = 0; return }
     elapsed.current += dt
     const input = controls.current
     const accelerating = input.gas || input.up
@@ -294,7 +300,7 @@ export default function App() {
 
     {started && <div className="mobile-controls">
       <div className="mobile-steer"><button onPointerDown={bindControl('left', true)} onPointerUp={bindControl('left', false)} onPointerLeave={bindControl('left', false)} onPointerCancel={bindControl('left', false)}><ArrowLeft /></button><button onPointerDown={bindControl('right', true)} onPointerUp={bindControl('right', false)} onPointerLeave={bindControl('right', false)} onPointerCancel={bindControl('right', false)}><ArrowRight /></button></div>
-      <div className="mobile-drive"><button className="nitro-button" onPointerDown={bindControl('nitro', true)} onPointerUp={bindControl('nitro', false)} onPointerLeave={bindControl('nitro', false)} onPointerCancel={bindControl('nitro', false)}><Zap size={17} /> BOOST</button><button className="gas-button" onPointerDown={bindControl('gas', true)} onPointerUp={bindControl('gas', false)} onPointerLeave={bindControl('gas', false)} onPointerCancel={bindControl('gas', false)}><ArrowUp size={23} /></button></div>
+      <div className="mobile-drive"><button className="nitro-button" onPointerDown={bindControl('nitro', true)} onPointerUp={bindControl('nitro', false)} onPointerLeave={bindControl('nitro', false)} onPointerCancel={bindControl('nitro', false)}><Zap size={17} /> BOOST</button><button className="brake-button" onPointerDown={bindControl('brake', true)} onPointerUp={bindControl('brake', false)} onPointerLeave={bindControl('brake', false)} onPointerCancel={bindControl('brake', false)}><ArrowDown size={18} /> BRAKE</button><button className="gas-button" onPointerDown={bindControl('gas', true)} onPointerUp={bindControl('gas', false)} onPointerLeave={bindControl('gas', false)} onPointerCancel={bindControl('gas', false)}><ArrowUp size={23} /></button></div>
     </div>}
     <div className="version-mark">APEX ENGINE <span>•</span> R3F / WEBGL</div>
   </main>
