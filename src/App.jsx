@@ -8,14 +8,26 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Gauge, Pause, Play, RotateCc
 
 const LANES = [-3.65, 0, 3.65]
 const BEST_KEY = 'apex-run-r3f-best'
-const CAR_MODEL_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CarConcept/glTF-Binary/CarConcept.glb'
+const CAR_MODEL_URL = 'https://models.vinish.dev/realistic-cars/sport-sedan.glb'
 
-function DetailedPlayerCar() {
+function DetailedPlayerCar({ steer = 0, speed = 0 }) {
   const { scene } = useGLTF(CAR_MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
-  return <group rotation={[0, Math.PI, 0]} scale={0.82}><primitive object={model} /></group>
+  const wheelNames = ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR']
+  const wheels = useMemo(() => wheelNames.map(name => model.getObjectByName(name)), [model])
+  const wheelSpin = useRef(0)
+  useFrame((_, delta) => {
+    wheelSpin.current += speed * 63.3 * delta / 0.345
+    wheels.forEach((wheel, index) => {
+      if (!wheel) return
+      wheel.rotation.order = 'YXZ'
+      const baseSteer = wheel.userData.baseSteer ?? wheel.rotation.y
+      wheel.userData.baseSteer = baseSteer
+      wheel.rotation.set(index % 2 ? -wheelSpin.current : wheelSpin.current, baseSteer + (index < 2 ? steer * 0.34 : 0), 0)
+    })
+  })
+  return <group rotation={[0, Math.PI, 0]} scale={0.76}><primitive object={model} /></group>
 }
-
 function CarModel({ color = '#c8ff4d', player = false, steer = 0 }) {
   const wheelRefs = useRef([])
   useFrame((_, delta) => {
@@ -218,7 +230,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
     <RigidBody ref={playerBody} colliders={false} position={[0, 0.08, 3.4]} mass={1150} linearDamping={0.08} angularDamping={4.2} enabledRotations={[false, true, false]} canSleep={false}>
       <CuboidCollider position={[0, 0.55, 0]} args={[0.9, 0.42, 1.86]} friction={1.05} restitution={0.02} />
-      <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar /></Suspense></group>
+      <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar steer={steering.current} speed={speed.current} /></Suspense></group>
     </RigidBody>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]}><planeGeometry args={[12, 220]} /><meshBasicMaterial color="#000" transparent opacity={0.001} /></mesh>
     {boost && <pointLight position={[0, 1, 4]} color="#aaff58" intensity={3} distance={8} />}
