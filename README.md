@@ -6,7 +6,7 @@ A browser-based 3D arcade racing game built with **React, Vite, Three.js, React 
 
 - Real-time 3D highway scene with perspective camera, lighting, fog, road markings and roadside scenery.
 - Rapier WASM four-wheel raycast vehicle controller with suspension rays, spring stiffness, compression/rebound damping, tire grip, rear-wheel drive, front-wheel steering, braking and aerodynamic drag.
-- Detailed glTF concept-car asset from the Vinish.dev Sport Sedan GLB (CC BY 4.0; attribution below).
+- Detailed sport-sedan glTF asset from vinish.dev (CC BY 4.0; attribution below).
 - Responsive steering, acceleration, braking and nitro boost.
 - Traffic vehicles, collision detection, near-miss bonuses, score and distance tracking.
 - Follow camera with subtle motion and speed feedback.
@@ -46,7 +46,7 @@ The production-ready site is generated in `dist/`.
 | --- | --- | --- |
 | Steer | A / D or ← / → | Left / right |
 | Accelerate | W / ↑ | Gas |
-| Brake | S / ↓ | — |
+| Brake | S / ↓ | Brake |
 | Nitro | Space | Nitro |
 | Pause | P / Esc | Pause button |
 
