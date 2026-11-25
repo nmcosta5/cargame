@@ -76,8 +76,15 @@ function Road() {
   </group>
 }
 
-function TrafficCar({ x, z, color }) {
-  return <group position={[x, 0, z]} scale={0.82}><CarModel color={color} /></group>
+function TrafficCar({ car }) {
+  const group = useRef()
+  useFrame(() => {
+    if (group.current) {
+      group.current.position.x = LANES[car.lane]
+      group.current.position.z = car.z
+    }
+  })
+  return <group ref={group} scale={0.82}><CarModel color={car.color} /></group>
 }
 
 function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
@@ -155,7 +162,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     <spotLight position={[0, 12, 1]} intensity={2.5} angle={0.45} penumbra={0.8} distance={35} color="#e9ffd0" />
     <Stars radius={100} depth={45} count={700} factor={2} saturation={0} fade speed={0.15} />
     <Road />
-    {traffic.current.map(car => <TrafficCar key={car.id} x={LANES[car.lane]} z={car.z} color={car.color} />)}
+    {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
     <group ref={player} position={[0, 0, 3.4]}><CarModel player /></group>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]}><planeGeometry args={[12, 220]} /><meshBasicMaterial color="#000" transparent opacity={0.001} /></mesh>
     {boost && <pointLight position={[0, 1, 4]} color="#aaff58" intensity={3} distance={8} />}
