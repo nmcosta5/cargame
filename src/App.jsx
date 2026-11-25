@@ -10,7 +10,7 @@ const LANES = [-3.65, 0, 3.65]
 const BEST_KEY = 'apex-run-r3f-best'
 const CAR_MODEL_URL = 'https://models.vinish.dev/realistic-cars/sport-sedan.glb'
 
-function DetailedPlayerCar({ steer = 0, speed = 0 }) {
+function DetailedPlayerCar({ steer = 0, speed = 0, vehicleRef }) {
   const { scene } = useGLTF(CAR_MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
   const wheelNames = ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR']
@@ -18,12 +18,28 @@ function DetailedPlayerCar({ steer = 0, speed = 0 }) {
   const wheelSpin = useRef(0)
   useFrame((_, delta) => {
     wheelSpin.current += speed * 63.3 * delta / 0.345
+    const controller = vehicleRef?.current
     wheels.forEach((wheel, index) => {
       if (!wheel) return
       wheel.rotation.order = 'YXZ'
-      const baseSteer = wheel.userData.baseSteer ?? wheel.rotation.y
-      wheel.userData.baseSteer = baseSteer
-      wheel.rotation.set(index % 2 ? -wheelSpin.current : wheelSpin.current, baseSteer + (index < 2 ? steer * 0.34 : 0), 0)
+      if (controller) {
+        const connection = controller.wheelChassisConnectionPointCs(index)
+        const suspension = controller.wheelSuspensionLength(index) ?? 0.25
+        const rotation = controller.wheelRotation(index) ?? wheelSpin.current
+        const steeringAngle = controller.wheelSteering(index) ?? 0
+        if (connection) {
+          wheel.position.x = connection.x / 0.76
+          wheel.position.y = (connection.y - suspension - 0.13) / 0.76
+          wheel.position.z = connection.z / 0.76
+        }
+        const baseSteer = wheel.userData.baseSteer ?? wheel.rotation.y
+        wheel.userData.baseSteer = baseSteer
+        wheel.rotation.set(index % 2 ? -rotation : rotation, baseSteer + steeringAngle, 0)
+      } else {
+        const baseSteer = wheel.userData.baseSteer ?? wheel.rotation.y
+        wheel.userData.baseSteer = baseSteer
+        wheel.rotation.set(index % 2 ? -wheelSpin.current : wheelSpin.current, baseSteer + (index < 2 ? steer * 0.34 : 0), 0)
+      }
     })
   })
   return <group scale={0.76}><primitive object={model} /></group>
@@ -308,7 +324,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
     <RigidBody ref={playerBody} colliders={false} position={[0, -0.13, 3.4]} rotation={[0, Math.PI, 0]} mass={1150} linearDamping={0.22} angularDamping={1.4} enabledRotations={[false, true, false]} canSleep={false}>
       <CuboidCollider position={[0, 0.72, 0]} args={[0.9, 0.28, 1.86]} friction={1.05} restitution={0.02} />
-      <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar steer={steering.current} speed={speed.current} /></Suspense></group>
+      <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar steer={steering.current} speed={speed.current} vehicleRef={vehicle} /></Suspense></group>
     </RigidBody>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]}><planeGeometry args={[12, 220]} /><meshBasicMaterial color="#000" transparent opacity={0.001} /></mesh>
     {boost && <pointLight position={[0, 1, 4]} color="#aaff58" intensity={3} distance={8} />}
