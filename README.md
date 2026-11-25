@@ -8,7 +8,7 @@ A browser-based 3D arcade racing game built with **React, Vite, Three.js, React 
 - Rapier WASM four-wheel raycast vehicle controller with suspension rays, spring stiffness, compression/rebound damping, tire grip, rear-wheel drive, front-wheel steering, braking and aerodynamic drag.
 - Detailed sport-sedan glTF asset from vinish.dev (CC BY 4.0; attribution below).
 - Responsive steering, acceleration, braking and nitro boost.
-- Traffic vehicles, collision detection, near-miss bonuses, score and distance tracking.
+- Kinematic traffic vehicles with Rapier collision bodies, solid guardrails, crash detection, near-miss bonuses, score and distance tracking.
 - Follow camera with subtle motion and speed feedback.
 - Keyboard and touch controls, pause/resume, restart and sound toggle.
 - Persistent personal best using localStorage.
