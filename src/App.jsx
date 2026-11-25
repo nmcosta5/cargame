@@ -279,7 +279,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetK
       player.current.position.y = 0.13 + Math.sin(elapsed.current * (8 + speed.current * 8)) * 0.006
     }
     const flow = speed.current * 63.3 * dt
-    roadMotion.current = flow / Math.max(dt, 0.0001)
+    roadMotion.current = 0
     distance.current += flow / 1000
     points.current += flow * (usingNitro ? 1.5 : 1.0)
     traffic.current.forEach(car => {
