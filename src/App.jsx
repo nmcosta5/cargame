@@ -438,6 +438,6 @@ export default function App() {
       <div className="mobile-steer"><button onPointerDown={bindControl('left', true)} onPointerUp={bindControl('left', false)} onPointerLeave={bindControl('left', false)} onPointerCancel={bindControl('left', false)}><ArrowLeft /></button><button onPointerDown={bindControl('right', true)} onPointerUp={bindControl('right', false)} onPointerLeave={bindControl('right', false)} onPointerCancel={bindControl('right', false)}><ArrowRight /></button></div>
       <div className="mobile-drive"><button className="nitro-button" onPointerDown={bindControl('nitro', true)} onPointerUp={bindControl('nitro', false)} onPointerLeave={bindControl('nitro', false)} onPointerCancel={bindControl('nitro', false)}><Zap size={17} /> BOOST</button><button className="brake-button" onPointerDown={bindControl('brake', true)} onPointerUp={bindControl('brake', false)} onPointerLeave={bindControl('brake', false)} onPointerCancel={bindControl('brake', false)}><ArrowDown size={18} /> BRAKE</button><button className="gas-button" onPointerDown={bindControl('gas', true)} onPointerUp={bindControl('gas', false)} onPointerLeave={bindControl('gas', false)} onPointerCancel={bindControl('gas', false)}><ArrowUp size={23} /></button></div>
     </div>}
-    <div className="version-mark">APEX ENGINE <span>•</span> R3F / WEBGL</div>
+    <div className="version-mark">SPORT SEDAN BY VINISH.DEV <span>•</span> CC BY 4.0</div>
   </main>
 }
