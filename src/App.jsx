@@ -112,7 +112,30 @@ function Road({ motion }) {
   </group>
 }
 
+function DetailedTrafficCar({ car }) {
+  const { scene } = useGLTF(CAR_MODEL_URL)
+  const model = useMemo(() => scene.clone(true), [scene])
+  const group = useRef()
+  const wheelNames = ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR']
+  const wheels = useMemo(() => wheelNames.map(name => model.getObjectByName(name)), [model])
+  const spin = useRef(0)
+  useFrame((_, delta) => {
+    if (group.current) {
+      group.current.position.x = LANES[car.lane]
+      group.current.position.z = car.z
+    }
+    spin.current += delta * (car.speed * 34)
+    wheels.forEach((wheel, index) => {
+      if (!wheel) return
+      wheel.rotation.order = 'YXZ'
+      wheel.rotation.x = index % 2 ? -spin.current : spin.current
+    })
+  })
+  return <group ref={group} scale={0.76}><primitive object={model} /></group>
+}
+
 function TrafficCar({ car }) {
+  if (car.id % 6 === 0) return <DetailedTrafficCar car={car} />
   const group = useRef()
   useFrame(() => {
     if (group.current) {
