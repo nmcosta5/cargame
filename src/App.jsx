@@ -293,7 +293,7 @@ export default function App() {
 
   return <main className="app-shell">
     <div className="scene"><Canvas shadows dpr={[1, 1.65]} camera={{ position: [0, 5.4, 10.8], fov: 57 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
-      <Physics gravity={[0, -9.81, 0]} timeStep="vary" interpolate><GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} /></Physics>
+      <Suspense fallback={null}><Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} interpolate maxCcdSubsteps={4}><GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} /></Physics></Suspense>
     </Canvas></div>
     <div className="vignette" />
     <header className="topbar">
