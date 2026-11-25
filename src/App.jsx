@@ -248,9 +248,15 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
       vehicle.current.setWheelEngineForce(2, engineForce)
       vehicle.current.setWheelEngineForce(3, engineForce)
       for (let i = 0; i < 4; i++) vehicle.current.setWheelBrake(i, braking ? 1650 : 0)
-      chassis.addForce({ x: 0, y: 0, z: velocity.z > 0 ? -velocity.z * 90 : Math.abs(velocity.z) * 90 }, true)
+      chassis.addForce({ x: 0, y: 0, z: -0.42 * velocity.z * Math.abs(velocity.z) - 12 * velocity.z }, true)
       playerX.current = chassis.translation().x
       playerZ.current = chassis.translation().z
+      if (playerZ.current < -500) {
+        const wrapped = chassis.translation()
+        chassis.setTranslation({ x: wrapped.x, y: wrapped.y, z: wrapped.z + 504 }, true)
+        playerZ.current += 504
+        traffic.current.forEach(car => { car.z += 504 })
+      }
       lateralVelocity.current = velocity.x
     }
     if (player.current) {
@@ -301,7 +307,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     <Road motion={roadMotion} />
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
     <RigidBody ref={playerBody} colliders={false} position={[0, -0.13, 3.4]} rotation={[0, Math.PI, 0]} mass={1150} linearDamping={0.22} angularDamping={1.4} enabledRotations={[false, true, false]} canSleep={false}>
-      <CuboidCollider position={[0, 0.55, 0]} args={[0.9, 0.42, 1.86]} friction={1.05} restitution={0.02} />
+      <CuboidCollider position={[0, 0.72, 0]} args={[0.9, 0.28, 1.86]} friction={1.05} restitution={0.02} />
       <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar steer={steering.current} speed={speed.current} /></Suspense></group>
     </RigidBody>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]}><planeGeometry args={[12, 220]} /><meshBasicMaterial color="#000" transparent opacity={0.001} /></mesh>
