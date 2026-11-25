@@ -7,39 +7,41 @@ import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Gauge, Pause, Play, RotateCc
 const LANES = [-3.65, 0, 3.65]
 const BEST_KEY = 'apex-run-r3f-best'
 
-function CarModel({ color = '#c8ff4d', player = false }) {
-  const wheels = [-1, 1].flatMap(x => [-1, 1].map(z => [x * 0.88, -0.24, z * 0.94]))
+function CarModel({ color = '#c8ff4d', player = false, steer = 0 }) {
+  const wheelRefs = useRef([])
+  useFrame((_, delta) => {
+    wheelRefs.current.forEach((wheel, index) => {
+      if (!wheel) return
+      wheel.rotation.x -= delta * (player ? 8 : 5)
+      if (index < 2) wheel.rotation.y = THREE.MathUtils.damp(wheel.rotation.y, steer * 0.28, 9, delta)
+    })
+  })
+  const wheels = [[-0.91, 0.34, -1.02], [0.91, 0.34, -1.02], [-0.91, 0.34, 1.02], [0.91, 0.34, 1.02]]
   return (
     <group>
-      <mesh castShadow position={[0, 0.38, 0]}>
-        <boxGeometry args={[1.72, 0.48, 3.25]} />
-        <meshStandardMaterial color={color} metalness={0.72} roughness={0.24} />
-      </mesh>
-      <mesh castShadow position={[0, 0.72, -0.18]}>
-        <boxGeometry args={[1.42, 0.58, 1.62]} />
-        <meshPhysicalMaterial color="#18252c" metalness={0.48} roughness={0.12} clearcoat={1} />
-      </mesh>
-      <mesh position={[0, 0.74, -0.18]}>
-        <boxGeometry args={[1.28, 0.38, 1.48]} />
-        <meshStandardMaterial color="#4c7680" metalness={0.65} roughness={0.16} transparent opacity={0.55} />
-      </mesh>
-      <mesh position={[0, 0.18, 1.62]}>
-        <boxGeometry args={[1.56, 0.13, 0.08]} />
-        <meshStandardMaterial color={player ? '#f4fff0' : '#ff3e35'} emissive={player ? '#c9ff8a' : '#ff170d'} emissiveIntensity={2.2} />
-      </mesh>
-      {player && <mesh position={[0, 0.19, -1.62]}><boxGeometry args={[1.5, 0.12, 0.08]} /><meshStandardMaterial color="#d9ff7d" emissive="#bfff4b" emissiveIntensity={1.6} /></mesh>}
-      {wheels.map(([x, y, z], i) => (
-        <group key={i} position={[x, y, z]} rotation={[0, 0, Math.PI / 2]}>
-          <mesh castShadow><cylinderGeometry args={[0.34, 0.34, 0.22, 18]} /><meshStandardMaterial color="#090d10" roughness={0.88} /></mesh>
-          <mesh rotation={[0, 0, 0]} position={[0, 0.116, 0]}><cylinderGeometry args={[0.19, 0.19, 0.018, 16]} /><meshStandardMaterial color="#9ca9ad" metalness={0.9} roughness={0.25} /></mesh>
+      <mesh castShadow receiveShadow position={[0, 0.43, 0]}><boxGeometry args={[1.82, 0.48, 3.72]} /><meshStandardMaterial color={color} metalness={0.62} roughness={0.27} /></mesh>
+      <mesh castShadow position={[0, 0.68, -1.13]} scale={[0.98, 0.38, 0.72]}><boxGeometry args={[1.72, 1, 1]} /><meshStandardMaterial color={color} metalness={0.58} roughness={0.25} /></mesh>
+      <mesh castShadow position={[0, 0.67, 1.27]} scale={[0.94, 0.34, 0.48]}><boxGeometry args={[1.72, 1, 1]} /><meshStandardMaterial color={color} metalness={0.58} roughness={0.25} /></mesh>
+      <mesh castShadow position={[0, 0.94, -0.02]}><boxGeometry args={[1.48, 0.72, 1.92]} /><meshPhysicalMaterial color="#15252d" metalness={0.42} roughness={0.13} clearcoat={1} /></mesh>
+      <mesh position={[0, 1.0, -0.12]}><boxGeometry args={[1.37, 0.54, 1.72]} /><meshPhysicalMaterial color="#71929a" metalness={0.35} roughness={0.12} transparent opacity={0.34} clearcoat={1} /></mesh>
+      <mesh position={[0, 1.29, -0.02]}><boxGeometry args={[1.45, 0.055, 1.82]} /><meshStandardMaterial color="#10191d" metalness={0.55} roughness={0.3} /></mesh>
+      <mesh position={[0, 0.34, -1.89]}><boxGeometry args={[1.25, 0.2, 0.12]} /><meshStandardMaterial color="#11191c" metalness={0.7} roughness={0.3} /></mesh>
+      <mesh position={[0, 0.43, -1.96]}><boxGeometry args={[0.72, 0.12, 0.025]} /><meshStandardMaterial color="#59676b" metalness={0.85} roughness={0.2} /></mesh>
+      {[-0.62, 0.62].map(x => <mesh key={x} position={[x, 0.58, -1.88]}><boxGeometry args={[0.38, 0.13, 0.06]} /><meshStandardMaterial color="#f7fff0" emissive={player ? "#eaffd0" : "#fff0bf"} emissiveIntensity={player ? 2.8 : 0.8} /></mesh>)}
+      {[-0.65, 0.65].map(x => <mesh key={x} position={[x, 0.53, 1.88]}><boxGeometry args={[0.36, 0.14, 0.06]} /><meshStandardMaterial color="#ff3328" emissive="#ff170d" emissiveIntensity={1.8} /></mesh>)}
+      {[-1, 1].map(side => <group key={side} position={[side * 0.91, 0.86, -0.53]}><mesh position={[side * 0.13, 0, 0]}><boxGeometry args={[0.3, 0.13, 0.24]} /><meshStandardMaterial color={color} metalness={0.6} /></mesh><mesh position={[side * 0.14, 0.02, -0.02]}><boxGeometry args={[0.025, 0.075, 0.17]} /><meshStandardMaterial color="#a9c2c5" metalness={0.8} /></mesh></group>)}
+      {wheels.map(([x, y, z], i) => <group key={i} position={[x, y, z]}>
+        <mesh position={[0, 0.02, 0]}><torusGeometry args={[0.36, 0.075, 8, 20]} /><meshStandardMaterial color="#111719" roughness={0.95} /></mesh>
+        <group ref={node => { wheelRefs.current[i] = node }} rotation={[0, 0, Math.PI / 2]}>
+          <mesh castShadow><cylinderGeometry args={[0.31, 0.31, 0.24, 24]} /><meshStandardMaterial color="#090d10" roughness={0.9} /></mesh>
+          <mesh position={[0, 0.126, 0]}><cylinderGeometry args={[0.19, 0.19, 0.018, 20]} /><meshStandardMaterial color="#aeb9ba" metalness={0.95} roughness={0.2} /></mesh>
+          <mesh position={[0, 0.139, 0]}><cylinderGeometry args={[0.075, 0.075, 0.02, 12]} /><meshStandardMaterial color="#343f43" metalness={0.85} /></mesh>
         </group>
-      ))}
-      {player && <group position={[0, 0.15, -1.76]}><mesh rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[0.17, 0.7, 12]} /><meshBasicMaterial color="#a7efff" transparent opacity={0.65} /></mesh></group>}
-      <mesh position={[0, 0.19, -1.52]}><boxGeometry args={[1.2, 0.08, 0.12]} /><meshStandardMaterial color="#10171a" metalness={0.7} /></mesh>
+      </group>)}
+      {player && <mesh position={[0, 0.18, 2.02]}><boxGeometry args={[1.2, 0.08, 0.08]} /><meshStandardMaterial color="#c8ff4d" emissive="#c8ff4d" emissiveIntensity={1.5} /></mesh>}
     </group>
   )
 }
-
 function Roadside() {
   const items = useMemo(() => Array.from({ length: 48 }, (_, i) => ({
     z: -i * 4.2 - 4,
@@ -56,10 +58,17 @@ function Roadside() {
   </group>
 }
 
-function Road() {
+function Road({ motion }) {
   const dashes = useMemo(() => Array.from({ length: 34 }, (_, i) => -i * 6), [])
   const lights = useMemo(() => Array.from({ length: 26 }, (_, i) => -i * 8 - 2), [])
-  return <group>
+  const world = useRef()
+  const offset = useRef(0)
+  useFrame((_, delta) => {
+    if (!world.current) return
+    offset.current = (offset.current + (motion.current || 0) * delta) % 228
+    world.current.position.z = offset.current
+  })
+  return <group ref={world}>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, -78]} receiveShadow>
       <planeGeometry args={[260, 220]} /><meshStandardMaterial color="#182b27" roughness={1} />
     </mesh>
@@ -98,10 +107,13 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
   const speed = useRef(0)
   const nitro = useRef(100)
   const playerX = useRef(0)
-  const laneTraffic = useMemo(() => Array.from({ length: 11 }, (_, i) => ({
-    id: i, lane: (i * 7 + 1) % 3, z: -18 - i * 15.5,
-    color: ['#d95042', '#e1e5e2', '#3986a8', '#d4a13f', '#7864a7', '#202a31'][i % 6],
-    speed: 0.78 + (i % 4) * 0.075, near: false,
+  const lateralVelocity = useRef(0)
+  const roadMotion = useRef(0)
+  const steering = useRef(0)
+  const laneTraffic = useMemo(() => Array.from({ length: 13 }, (_, i) => ({
+    id: i, lane: (i * 7 + 1) % 3, z: -22 - i * 15.5,
+    color: ['#b83f36', '#dce3e2', '#28799a', '#c28c32', '#675b91', '#202a31', '#587b63'][i % 7],
+    speed: 0.72 + (i % 5) * 0.085, size: i % 4 === 0 ? 0.94 : 0.82, near: false,
   })), [])
   if (traffic.current.length === 0) traffic.current = laneTraffic
   useFrame((state, delta) => {
@@ -112,20 +124,26 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     const accelerating = input.gas || input.up
     const braking = input.brake || input.down
     const usingNitro = (input.nitro || boost) && nitro.current > 0
-    const target = accelerating ? 1 : braking ? 0.18 : 0.68
-    speed.current = THREE.MathUtils.damp(speed.current, target, accelerating ? 1.8 : 1.05, dt)
+    const target = accelerating ? 1 : braking ? 0.06 : 0.2
+    speed.current = THREE.MathUtils.damp(speed.current, target, accelerating ? 1.25 : braking ? 3.2 : 0.42, dt)
     if (usingNitro) {
       nitro.current = Math.max(0, nitro.current - 32 * dt)
       speed.current = Math.min(1.42, speed.current + dt * 0.75)
     } else nitro.current = Math.min(100, nitro.current + 10 * dt)
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0)
-    playerX.current = THREE.MathUtils.clamp(playerX.current + steer * dt * (5.5 + speed.current * 2.5), -4.6, 4.6)
+    steering.current = THREE.MathUtils.damp(steering.current, steer, 8, dt)
+    const lateralGrip = 4.2 + speed.current * 2.8
+    lateralVelocity.current = THREE.MathUtils.damp(lateralVelocity.current, steer * lateralGrip, 4.8, dt)
+    if (!steer) lateralVelocity.current = THREE.MathUtils.damp(lateralVelocity.current, 0, 2.2, dt)
+    playerX.current = THREE.MathUtils.clamp(playerX.current + lateralVelocity.current * dt, -4.85, 4.85)
     if (player.current) {
-      player.current.position.x = THREE.MathUtils.damp(player.current.position.x, playerX.current, 10, dt)
-      player.current.rotation.z = THREE.MathUtils.damp(player.current.rotation.z, -steer * 0.13, 8, dt)
-      player.current.position.y = 0.04 + Math.sin(elapsed.current * 12) * 0.018
+      player.current.position.x = THREE.MathUtils.damp(player.current.position.x, playerX.current, 12, dt)
+      player.current.rotation.z = THREE.MathUtils.damp(player.current.rotation.z, -steering.current * 0.19 - lateralVelocity.current * 0.012, 5, dt)
+      player.current.rotation.y = THREE.MathUtils.damp(player.current.rotation.y, -steering.current * 0.12, 5, dt)
+      player.current.position.y = 0.035 + Math.sin(elapsed.current * (8 + speed.current * 8)) * 0.012
     }
-    const flow = (13 + speed.current * 25) * dt
+    const flow = (3 + speed.current * 44) * dt
+    roadMotion.current = 3 + speed.current * 44
     distance.current += speed.current * dt * 0.052
     points.current += speed.current * dt * (usingNitro ? 42 : 25)
     traffic.current.forEach(car => {
@@ -143,10 +161,13 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
         points.current += 220
       }
     })
-    camera.position.x = THREE.MathUtils.damp(camera.position.x, playerX.current * 0.25, 2.5, dt)
-    camera.position.y = 5.4 + (usingNitro ? 0.18 : 0)
-    camera.position.z = 10.8
-    camera.lookAt(playerX.current * 0.12, 0.2, -8.5)
+    camera.position.x = THREE.MathUtils.damp(camera.position.x, playerX.current * 0.38, 2.2, dt)
+    camera.position.y = THREE.MathUtils.damp(camera.position.y, 5.15 + speed.current * 0.55 + (usingNitro ? 0.22 : 0), 2, dt)
+    camera.position.z = 10.8 + speed.current * 0.65
+    camera.rotation.z = THREE.MathUtils.damp(camera.rotation.z, -steering.current * 0.025, 2.5, dt)
+    camera.fov = THREE.MathUtils.damp(camera.fov, 55 + speed.current * 13 + (usingNitro ? 5 : 0), 2.5, dt)
+    camera.updateProjectionMatrix()
+    camera.lookAt(playerX.current * 0.16, 0.28, -8.5)
     report.current += dt
     if (report.current > 0.09) {
       report.current = 0
@@ -161,9 +182,9 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     <directionalLight position={[-12, 18, 10]} intensity={3.2} castShadow shadow-mapSize={[2048, 2048]} />
     <spotLight position={[0, 12, 1]} intensity={2.5} angle={0.45} penumbra={0.8} distance={35} color="#e9ffd0" />
     <Stars radius={100} depth={45} count={700} factor={2} saturation={0} fade speed={0.15} />
-    <Road />
+    <Road motion={roadMotion} />
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
-    <group ref={player} position={[0, 0, 3.4]}><CarModel player /></group>
+    <group ref={player} position={[0, 0, 3.4]}><CarModel player steer={steering.current} /></group>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]}><planeGeometry args={[12, 220]} /><meshBasicMaterial color="#000" transparent opacity={0.001} /></mesh>
     {boost && <pointLight position={[0, 1, 4]} color="#aaff58" intensity={3} distance={8} />}
   </>
