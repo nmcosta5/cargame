@@ -1,16 +1,10 @@
-# APEX RUN — 3D Highway Racing
+# Nzabana Merci — Portfolio
 
-A browser-based 3D arcade racing game built with **React, Vite, Three.js and React Three Fiber**.
+Personal portfolio of **Nzabana Merci**, a Rwandan Full-Stack Software Developer. The page sits on a live 3D highway scene built with **React, Vite, Three.js and React Three Fiber**; the camera moves as you scroll.
 
-## Features
+The site also includes **APEX RUN**, a playable 3D arcade racer. Open it from the "Play APEX RUN" button or the APEX RUN project card. Press `Esc` or the close button to go back to the portfolio.
 
-- Real-time 3D highway scene with perspective camera, lighting, fog, road markings and roadside scenery.
-- Player vehicle with responsive steering, acceleration, braking and nitro boost.
-- Traffic vehicles, collision detection, near-miss bonuses, score and distance tracking.
-- Follow camera with subtle motion and speed feedback.
-- Keyboard and touch controls, pause/resume, restart and sound toggle.
-- Persistent personal best using localStorage.
-- Responsive game HUD and start, pause and results screens.
+Portfolio content (about, education, skills, projects and so on) is in `src/data.js`.
 
 ## Run locally
 
