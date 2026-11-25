@@ -43,7 +43,7 @@ function CarModel({ color = '#c8ff4d', player = false, steer = 0 }) {
   )
 }
 function Roadside() {
-  const items = useMemo(() => Array.from({ length: 48 }, (_, i) => ({
+  const items = useMemo(() => Array.from({ length: 120 }, (_, i) => ({
     z: -i * 4.2 - 4,
     side: i % 2 ? 1 : -1,
     x: 8.5 + (i % 4) * 1.9,
@@ -59,28 +59,28 @@ function Roadside() {
 }
 
 function Road({ motion }) {
-  const dashes = useMemo(() => Array.from({ length: 34 }, (_, i) => -i * 6), [])
-  const lights = useMemo(() => Array.from({ length: 26 }, (_, i) => -i * 8 - 2), [])
+  const dashes = useMemo(() => Array.from({ length: 84 }, (_, i) => -i * 6), [])
+  const lights = useMemo(() => Array.from({ length: 63 }, (_, i) => -i * 8 - 2), [])
   const world = useRef()
   const offset = useRef(0)
   useFrame((_, delta) => {
     if (!world.current) return
-    offset.current = (offset.current + (motion.current || 0) * delta) % 228
+    offset.current = (offset.current + (motion.current || 0) * delta) % 504
     world.current.position.z = offset.current
   })
   return <group ref={world}>
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, -78]} receiveShadow>
-      <planeGeometry args={[260, 220]} /><meshStandardMaterial color="#182b27" roughness={1} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.08, -980]} receiveShadow>
+      <planeGeometry args={[260, 2000]} /><meshStandardMaterial color="#182b27" roughness={1} />
     </mesh>
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -78]} receiveShadow>
-      <planeGeometry args={[12.2, 220]} /><meshStandardMaterial color="#30383d" roughness={0.9} />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -980]} receiveShadow>
+      <planeGeometry args={[12.2, 2000]} /><meshStandardMaterial color="#30383d" roughness={0.9} />
     </mesh>
-    {[-6.15, 6.15].map(x => <mesh key={x} position={[x, 0.04, -78]}><boxGeometry args={[0.18, 0.08, 220]} /><meshStandardMaterial color="#e6e0ca" /></mesh>)}
-    {[-6.65, 6.65].map(x => <mesh key={'shoulder'+x} position={[x, -0.005, -78]}><boxGeometry args={[0.78, 0.025, 220]} /><meshStandardMaterial color="#777d78" roughness={1} /></mesh>)}
+    {[-6.15, 6.15].map(x => <mesh key={x} position={[x, 0.04, -78]}><boxGeometry args={[0.18, 0.08, 2000]} /><meshStandardMaterial color="#e6e0ca" /></mesh>)}
+    {[-6.65, 6.65].map(x => <mesh key={'shoulder'+x} position={[x, -0.005, -78]}><boxGeometry args={[0.78, 0.025, 2000]} /><meshStandardMaterial color="#777d78" roughness={1} /></mesh>)}
     {[-7.25, 7.25].map(x => <group key={'rail'+x}>
-      <mesh position={[x, 0.82, -78]}><boxGeometry args={[0.12, 0.16, 220]} /><meshStandardMaterial color="#9aa4a4" metalness={0.78} roughness={0.32} /></mesh>
-      {Array.from({length:36},(_,i)=><mesh key={i} position={[x,0.42,-i*6.2-4]}><boxGeometry args={[0.16,0.82,0.16]} /><meshStandardMaterial color="#687579" metalness={0.65} /></mesh>)}
-      <mesh position={[x, 0.93, -78]}><boxGeometry args={[0.19, 0.055, 220]} /><meshStandardMaterial color="#d3d9d6" metalness={0.85} roughness={0.25} /></mesh>
+      <mesh position={[x, 0.82, -78]}><boxGeometry args={[0.12, 0.16, 2000]} /><meshStandardMaterial color="#9aa4a4" metalness={0.78} roughness={0.32} /></mesh>
+      {Array.from({length:324},(_,i)=><mesh key={i} position={[x,0.42,-i*6.2-4]}><boxGeometry args={[0.16,0.82,0.16]} /><meshStandardMaterial color="#687579" metalness={0.65} /></mesh>)}
+      <mesh position={[x, 0.93, -78]}><boxGeometry args={[0.19, 0.055, 2000]} /><meshStandardMaterial color="#d3d9d6" metalness={0.85} roughness={0.25} /></mesh>
     </group>)}
     {[-2, 2].map(x => dashes.map((z, i) => <mesh key={x + '-' + i} position={[x, 0.035, z]}><boxGeometry args={[0.075, 0.035, 2.7]} /><meshBasicMaterial color="#d8ded5" /></mesh>))}
     {lights.map((z, i) => [-1, 1].map(side => <group key={i + '-' + side} position={[side * 7.8, 0, z]}>
