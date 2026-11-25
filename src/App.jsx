@@ -162,7 +162,7 @@ function TrafficCar({ car }) {
   return <group ref={group} scale={0.82}><CarModel color={car.color} /></group>
 }
 
-function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
+function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetKey }) {
   const player = useRef()
   const playerBody = useRef()
   const vehicle = useRef(null)
@@ -218,7 +218,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     if (vehicle.current && active) vehicle.current.updateVehicle(1 / 60, rapier.QueryFilterFlags.EXCLUDE_DYNAMIC)
   })
   useEffect(() => {
-    if (!active || !playerBody.current) return
+    if (!playerBody.current) return
     playerBody.current.setTranslation({ x: 0, y: -0.13, z: 3.4 }, true)
     playerBody.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
     playerBody.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
@@ -235,7 +235,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
       car.z = 3.4 - 22 - index * 15.5
       car.near = false
     })
-  }, [active, laneTraffic])
+  }, [resetKey, laneTraffic])
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.04)
     if (!active) { roadMotion.current = 0; return }
@@ -254,7 +254,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
       const forwardSpeed = Math.abs(vehicle.current.currentVehicleSpeed())
       speed.current = THREE.MathUtils.clamp(forwardSpeed / 63.3, 0, 1.42)
       const speedLimit = usingNitro ? 76 : 63.3
-      const powerFalloff = THREE.MathUtils.clamp(1 - forwardSpeed / speedLimit, 0.12, 1)
+      const powerFalloff = THREE.MathUtils.clamp(1 - Math.pow(forwardSpeed / speedLimit, 2) * 0.72, 0.35, 1)
       const engineForce = accelerating ? (usingNitro ? 6200 : 4600) * powerFalloff : 0
       const steerAngle = -steering.current * (0.43 - Math.min(speed.current, 1) * 0.16)
       vehicle.current.setWheelSteering(0, steerAngle)
@@ -341,6 +341,7 @@ export default function App() {
   const [best, setBest] = useState(() => Number(localStorage.getItem(BEST_KEY) || 0))
   const [sound, setSound] = useState(true)
   const [boost, setBoost] = useState(false)
+  const [resetKey, setResetKey] = useState(0)
   const controls = useRef({ left: false, right: false, gas: false, brake: false, up: false, down: false, nitro: false })
   const audio = useRef(null)
   const started = screen === 'playing'
@@ -363,7 +364,7 @@ export default function App() {
   const begin = useCallback(() => {
     controls.current = { left: false, right: false, gas: false, brake: false, up: false, down: false, nitro: false }
     setStats({ speed: 0, distance: 0, score: 0, nitro: 100, gear: 1 })
-    setBoost(false); setScreen('playing'); beep(520, 0.16)
+    setBoost(false); setResetKey(key => key + 1); setScreen('playing'); beep(520, 0.16)
   }, [beep])
 
   const crash = useCallback(() => {
@@ -399,7 +400,7 @@ export default function App() {
 
   return <main className="app-shell">
     <div className="scene"><Canvas shadows dpr={[1, 1.65]} camera={{ position: [0, 5.4, 10.8], fov: 57 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
-      <Suspense fallback={null}><Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} interpolate maxCcdSubsteps={4}><GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} /></Physics></Suspense>
+      <Suspense fallback={null}><Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} interpolate maxCcdSubsteps={4} paused={!started}><GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} resetKey={resetKey} /></Physics></Suspense>
     </Canvas></div>
     <div className="vignette" />
     <header className="topbar">
