@@ -321,7 +321,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetK
     <RigidBody type="fixed" colliders={false}><CuboidCollider position={[0, -0.16, 0]} args={[130, 0.16, 100000]} friction={1.1} /><CuboidCollider position={[-7.25, 0.82, 0]} args={[0.08, 0.12, 100000]} friction={0.85} restitution={0.12} /><CuboidCollider position={[7.25, 0.82, 0]} args={[0.08, 0.12, 100000]} friction={0.85} restitution={0.12} /></RigidBody>
     <Road motion={roadMotion} />
     {traffic.current.map(car => car.id % 6 === 0 ? <DetailedTrafficCar key={car.id} car={car} /> : <TrafficCar key={car.id} car={car} />)}
-    <RigidBody ref={playerBody} colliders={false} position={[0, -0.13, 3.4]} rotation={[0, Math.PI, 0]} mass={1150} linearDamping={0.22} angularDamping={1.4} enabledRotations={[false, true, false]} canSleep={false}>
+    <RigidBody ref={playerBody} colliders={false} position={[0, -0.13, 3.4]} rotation={[0, Math.PI, 0]} mass={1150} linearDamping={0.22} angularDamping={1.4} enabledRotations={[false, true, false]} canSleep={false} onCollisionEnter={() => onCrash()}>
       <CuboidCollider position={[0, 0.72, 0]} args={[0.9, 0.28, 1.86]} friction={1.05} restitution={0.02} />
       <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar steer={steering.current} speed={speed.current} vehicleRef={vehicle} /></Suspense></group>
     </RigidBody>
