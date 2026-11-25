@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Float, Stars } from '@react-three/drei'
+import { Float, Stars, useGLTF } from '@react-three/drei'
+import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
+import { Suspense } from 'react'
 import * as THREE from 'three'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Gauge, Pause, Play, RotateCcw, Volume2, VolumeX, Zap } from 'lucide-react'
 
 const LANES = [-3.65, 0, 3.65]
 const BEST_KEY = 'apex-run-r3f-best'
+const CAR_MODEL_URL = 'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CarConcept/glTF-Binary/CarConcept.glb'
+
+function DetailedPlayerCar() {
+  const { scene } = useGLTF(CAR_MODEL_URL)
+  const model = useMemo(() => scene.clone(true), [scene])
+  return <group rotation={[0, Math.PI, 0]} scale={0.82}><primitive object={model} /></group>
+}
 
 function CarModel({ color = '#c8ff4d', player = false, steer = 0 }) {
   const wheelRefs = useRef([])
@@ -104,6 +113,7 @@ function TrafficCar({ car }) {
 
 function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
   const player = useRef()
+  const playerBody = useRef()
   const traffic = useRef([])
   const { camera } = useThree()
   const elapsed = useRef(0)
@@ -138,15 +148,21 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     } else nitro.current = Math.min(100, nitro.current + 10 * dt)
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0)
     steering.current = THREE.MathUtils.damp(steering.current, steer, 8, dt)
-    const lateralGrip = 4.2 + speed.current * 2.8
-    lateralVelocity.current = THREE.MathUtils.damp(lateralVelocity.current, steer * lateralGrip, 4.8, dt)
-    if (!steer) lateralVelocity.current = THREE.MathUtils.damp(lateralVelocity.current, 0, 2.2, dt)
-    playerX.current = THREE.MathUtils.clamp(playerX.current + lateralVelocity.current * dt, -4.85, 4.85)
+    if (playerBody.current) {
+      const body = playerBody.current
+      const velocity = body.linvel()
+      const mass = 1150
+      const tireGrip = 5.2 + speed.current * 1.8
+      const lateralForce = THREE.MathUtils.clamp(steer * (10.5 + speed.current * 3.5) - velocity.x * tireGrip, -15, 15)
+      body.applyImpulse({ x: lateralForce * mass * dt, y: 0, z: 0 }, true)
+      body.applyTorqueImpulse({ x: 0, y: -steer * (520 + speed.current * 280) * dt, z: 0 }, true)
+      if (Math.abs(body.translation().x) > 4.75) body.applyImpulse({ x: -Math.sign(body.translation().x) * 22 * mass * dt, y: 0, z: 0 }, true)
+      playerX.current = body.translation().x
+      lateralVelocity.current = velocity.x
+    }
     if (player.current) {
-      player.current.position.x = THREE.MathUtils.damp(player.current.position.x, playerX.current, 12, dt)
-      player.current.rotation.z = THREE.MathUtils.damp(player.current.rotation.z, -steering.current * 0.19 - lateralVelocity.current * 0.012, 5, dt)
-      player.current.rotation.y = THREE.MathUtils.damp(player.current.rotation.y, -steering.current * 0.12, 5, dt)
-      player.current.position.y = 0.035 + Math.sin(elapsed.current * (8 + speed.current * 8)) * 0.012
+      player.current.rotation.z = THREE.MathUtils.damp(player.current.rotation.z, -steering.current * 0.11 - lateralVelocity.current * 0.018, 5, dt)
+      player.current.position.y = Math.sin(elapsed.current * (8 + speed.current * 8)) * 0.012
     }
     const flow = (3 + speed.current * 44) * dt
     roadMotion.current = 3 + speed.current * 44
@@ -188,9 +204,13 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     <directionalLight position={[-12, 18, 10]} intensity={3.2} castShadow shadow-mapSize={[2048, 2048]} />
     <spotLight position={[0, 12, 1]} intensity={2.5} angle={0.45} penumbra={0.8} distance={35} color="#e9ffd0" />
     <Stars radius={100} depth={45} count={700} factor={2} saturation={0} fade speed={0.15} />
+    <RigidBody type="fixed" colliders={false}><CuboidCollider position={[0, -0.16, -980]} args={[130, 0.16, 1000]} friction={1.1} /></RigidBody>
     <Road motion={roadMotion} />
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
-    <group ref={player} position={[0, 0, 3.4]}><CarModel player steer={steering.current} /></group>
+    <RigidBody ref={playerBody} colliders={false} position={[0, 0.08, 3.4]} mass={1150} linearDamping={0.08} angularDamping={4.2} enabledRotations={[false, true, false]} canSleep={false}>
+      <CuboidCollider position={[0, 0.55, 0]} args={[0.9, 0.42, 1.86]} friction={1.05} restitution={0.02} />
+      <group ref={player}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar /></Suspense></group>
+    </RigidBody>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]}><planeGeometry args={[12, 220]} /><meshBasicMaterial color="#000" transparent opacity={0.001} /></mesh>
     {boost && <pointLight position={[0, 1, 4]} color="#aaff58" intensity={3} distance={8} />}
   </>
@@ -264,7 +284,7 @@ export default function App() {
 
   return <main className="app-shell">
     <div className="scene"><Canvas shadows dpr={[1, 1.65]} camera={{ position: [0, 5.4, 10.8], fov: 57 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
-      <GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} />
+      <Physics gravity={[0, -9.81, 0]} timeStep="vary" interpolate><GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} /></Physics>
     </Canvas></div>
     <div className="vignette" />
     <header className="topbar">
