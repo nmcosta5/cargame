@@ -1,52 +1,50 @@
-# APEX RUN — Highway Racing
+# APEX RUN — 3D Highway Racing
 
-A fast, responsive arcade highway racer built with vanilla HTML, CSS and JavaScript. No framework, build step, package installation or external game engine required.
-
-## Play
-
-Open **[index.html](./index.html)** in a modern browser, or enable GitHub Pages for this repository and publish from the `main` branch / root folder.
+A browser-based 3D arcade racing game built with **React, Vite, Three.js and React Three Fiber**.
 
 ## Features
 
-- Canvas-based pseudo-3D highway with moving road perspective, lane markings, roadside scenery and atmospheric lighting
-- Responsive desktop and mobile layouts
-- Traffic spawning, collision detection, near-miss overtake bonuses and particle effects
-- Nitro boost with a regenerating energy meter
-- Live speed, gear, distance and score HUD
-- Personal-best score saved locally in the browser
-- Start, pause, resume, restart and game-over flows
-- Optional synthesized sound effects
-- Keyboard and touch controls
-- One self-contained HTML file; no dependencies
-
-## Controls
-
-| Action | Keyboard | Mobile |
-| --- | --- | --- |
-| Steer left / right | `←` / `→` or `A` / `D` | Left / right buttons |
-| Accelerate | `↑` or `W` | ▲ button |
-| Brake | `↓` or `S` | — |
-| Nitro | `Space` | NITRO button |
-| Pause / resume | `P` or `Esc` | — |
+- Real-time 3D highway scene with perspective camera, lighting, fog, road markings and roadside scenery.
+- Player vehicle with responsive steering, acceleration, braking and nitro boost.
+- Traffic vehicles, collision detection, near-miss bonuses, score and distance tracking.
+- Follow camera with subtle motion and speed feedback.
+- Keyboard and touch controls, pause/resume, restart and sound toggle.
+- Persistent personal best using localStorage.
+- Responsive game HUD and start, pause and results screens.
 
 ## Run locally
 
-No install required:
+Requires Node.js 18 or newer.
 
-1. Clone the repository.
-2. Open `index.html` in Chrome, Edge, Firefox or Safari.
+```bash
+npm install
+npm run dev
+```
 
-`git clone https://github.com/nmcosta5/cargame.git`
+Open the local URL printed by Vite.
 
-`cd cargame`
+## Production build
 
-## Deploy with GitHub Pages
+```bash
+npm run build
+npm run preview
+```
 
-1. Open repository **Settings → Pages**.
-2. Under **Build and deployment**, choose **Deploy from a branch**.
-3. Select `main` and `/(root)`, then save.
-4. GitHub Pages will publish the game at the repository's Pages URL.
+The production-ready site is generated in `dist/`.
+
+## Controls
+
+| Action | Keyboard | Touch |
+| --- | --- | --- |
+| Steer | A / D or ← / → | Left / right |
+| Accelerate | W / ↑ | Gas |
+| Brake | S / ↓ | — |
+| Nitro | Space | Nitro |
+| Pause | P / Esc | Pause button |
+
+## Deploy
+
+This is a Vite app. For GitHub Pages, configure the repository Pages workflow to build with `npm ci && npm run build` and publish the `dist` directory. Vercel can deploy it directly with the Vite preset.
 
 ---
-
-Made for the open road. **APEX RUN**
+Built for the open road.
