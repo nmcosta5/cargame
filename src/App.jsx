@@ -267,6 +267,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetK
       chassis.addForce({ x: 0, y: 0, z: -0.42 * velocity.z * Math.abs(velocity.z) - 12 * velocity.z }, true)
       playerX.current = chassis.translation().x
       playerZ.current = chassis.translation().z
+      if (Math.abs(playerX.current) > 5.35) onCrash()
       if (playerZ.current < -500) {
         const wrapped = chassis.translation()
         chassis.setTranslation({ x: wrapped.x, y: wrapped.y, z: wrapped.z + 504 }, true)
@@ -319,7 +320,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetK
     <directionalLight position={[-12, 18, 10]} intensity={3.2} castShadow shadow-mapSize={[2048, 2048]} />
     <spotLight position={[0, 12, 1]} intensity={2.5} angle={0.45} penumbra={0.8} distance={35} color="#e9ffd0" />
     <Stars radius={100} depth={45} count={700} factor={2} saturation={0} fade speed={0.15} />
-    <RigidBody type="fixed" colliders={false}><CuboidCollider position={[0, -0.16, 0]} args={[130, 0.16, 100000]} friction={1.1} /></RigidBody>
+    <RigidBody type="fixed" colliders={false}><CuboidCollider position={[0, -0.16, 0]} args={[130, 0.16, 100000]} friction={1.1} /><CuboidCollider position={[-7.25, 0.82, 0]} args={[0.08, 0.12, 100000]} friction={0.85} restitution={0.12} /><CuboidCollider position={[7.25, 0.82, 0]} args={[0.08, 0.12, 100000]} friction={0.85} restitution={0.12} /></RigidBody>
     <Road motion={roadMotion} />
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
     <RigidBody ref={playerBody} colliders={false} position={[0, -0.13, 3.4]} rotation={[0, Math.PI, 0]} mass={1150} linearDamping={0.22} angularDamping={1.4} enabledRotations={[false, true, false]} canSleep={false}>
