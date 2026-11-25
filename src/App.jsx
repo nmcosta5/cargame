@@ -310,7 +310,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetK
       report.current = 0
       onStats({ speed: Math.round(speed.current * 228), distance: distance.current, score: Math.floor(points.current), nitro: nitro.current, gear: Math.max(1, Math.min(6, Math.ceil(speed.current * 4.2))), boosting: usingNitro })
     }
-  })
+  }, -2)
   return <>
     <color attach="background" args={['#91a7a5']} />
     <fog attach="fog" args={['#91a7a5', 35, 155]} />
@@ -400,7 +400,7 @@ export default function App() {
 
   return <main className="app-shell">
     <div className="scene"><Canvas shadows dpr={[1, 1.65]} camera={{ position: [0, 5.4, 10.8], fov: 57 }} gl={{ antialias: true, powerPreference: 'high-performance' }}>
-      <Suspense fallback={null}><Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} interpolate maxCcdSubsteps={4} paused={!started}><GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} resetKey={resetKey} /></Physics></Suspense>
+      <Suspense fallback={null}><Physics gravity={[0, -9.81, 0]} timeStep={1 / 60} interpolate maxCcdSubsteps={4} updatePriority={-1} paused={!started}><GameWorld active={started} controls={controls} onStats={setStats} onCrash={crash} boost={boost} setBoost={setBoost} resetKey={resetKey} /></Physics></Suspense>
     </Canvas></div>
     <div className="vignette" />
     <header className="topbar">
