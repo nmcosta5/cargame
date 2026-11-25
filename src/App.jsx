@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Float, Stars, useGLTF } from '@react-three/drei'
-import { Physics, RigidBody, CuboidCollider } from '@react-three/rapier'
+import { Physics, RigidBody, CuboidCollider, useRapier, useBeforePhysicsStep } from '@react-three/rapier'
 import { Suspense } from 'react'
 import * as THREE from 'three'
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Gauge, Pause, Play, RotateCcw, Volume2, VolumeX, Zap } from 'lucide-react'
@@ -26,7 +26,7 @@ function DetailedPlayerCar({ steer = 0, speed = 0 }) {
       wheel.rotation.set(index % 2 ? -wheelSpin.current : wheelSpin.current, baseSteer + (index < 2 ? steer * 0.34 : 0), 0)
     })
   })
-  return <group rotation={[0, Math.PI, 0]} scale={0.76}><primitive object={model} /></group>
+  return <group scale={0.76}><primitive object={model} /></group>
 }
 function CarModel({ color = '#c8ff4d', player = false, steer = 0 }) {
   const wheelRefs = useRef([])
@@ -149,8 +149,10 @@ function TrafficCar({ car }) {
 function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
   const player = useRef()
   const playerBody = useRef()
+  const vehicle = useRef(null)
   const traffic = useRef([])
   const { camera } = useThree()
+  const { world, rapier } = useRapier()
   const elapsed = useRef(0)
   const report = useRef(0)
   const distance = useRef(0)
@@ -158,24 +160,66 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
   const speed = useRef(0)
   const nitro = useRef(100)
   const playerX = useRef(0)
+  const playerZ = useRef(3.4)
   const lateralVelocity = useRef(0)
   const roadMotion = useRef(0)
   const steering = useRef(0)
   const laneTraffic = useMemo(() => Array.from({ length: 13 }, (_, i) => ({
-    id: i, lane: (i * 7 + 1) % 3, z: -22 - i * 15.5,
+    id: i, lane: (i * 7 + 1) % 3, z: 3.4 - 22 - i * 15.5,
     color: ['#b83f36', '#dce3e2', '#28799a', '#c28c32', '#675b91', '#202a31', '#587b63'][i % 7],
     speed: 0.72 + (i % 5) * 0.085, size: i % 4 === 0 ? 0.94 : 0.82, near: false,
   })), [])
   if (traffic.current.length === 0) traffic.current = laneTraffic
   useEffect(() => {
+    if (!playerBody.current) return
+    const controller = world.createVehicleController(playerBody.current)
+    controller.indexUpAxis = 1
+    controller.setIndexForwardAxis = 2
+    const wheelPoints = [
+      { x: -0.72, y: 0.72, z: 1.12 },
+      { x: 0.72, y: 0.72, z: 1.12 },
+      { x: -0.72, y: 0.72, z: -1.12 },
+      { x: 0.72, y: 0.72, z: -1.12 },
+    ]
+    wheelPoints.forEach((point, index) => {
+      controller.addWheel(point, { x: 0, y: -1, z: 0 }, { x: -1, y: 0, z: 0 }, 0.25, 0.34)
+      controller.setWheelSuspensionStiffness(index, 32)
+      controller.setWheelSuspensionCompression(index, 4.4)
+      controller.setWheelSuspensionRelaxation(index, 2.3)
+      controller.setWheelMaxSuspensionTravel(index, 0.28)
+      controller.setWheelMaxSuspensionForce(index, 14000)
+      controller.setWheelFrictionSlip(index, 4.8)
+      controller.setWheelSideFrictionStiffness(index, 1.35)
+    })
+    vehicle.current = controller
+    playerBody.current.setRotation({ x: 0, y: 1, z: 0, w: 0 }, true)
+    return () => {
+      world.removeVehicleController(controller)
+      vehicle.current = null
+    }
+  }, [world])
+  useBeforePhysicsStep((dt) => {
+    if (vehicle.current && active) vehicle.current.updateVehicle(dt, rapier.QueryFilterFlags.EXCLUDE_DYNAMIC)
+  })
+  useEffect(() => {
     if (!active || !playerBody.current) return
     playerBody.current.setTranslation({ x: 0, y: -0.13, z: 3.4 }, true)
     playerBody.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
     playerBody.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
-    playerBody.current.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true)
+    playerBody.current.setRotation({ x: 0, y: 1, z: 0, w: 0 }, true)
     playerX.current = 0
+    playerZ.current = 3.4
     lateralVelocity.current = 0
-  }, [active])
+    distance.current = 0
+    points.current = 0
+    speed.current = 0
+    nitro.current = 100
+    laneTraffic.forEach((car, index) => {
+      car.lane = (index * 7 + 1) % 3
+      car.z = 3.4 - 22 - index * 15.5
+      car.near = false
+    })
+  }, [active, laneTraffic])
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.04)
     if (!active) { roadMotion.current = 0; return }
@@ -184,43 +228,48 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     const accelerating = input.gas || input.up
     const braking = input.brake || input.down
     const usingNitro = (input.nitro || boost) && nitro.current > 0
-    const target = accelerating ? 1 : braking ? 0.06 : 0.2
-    speed.current = THREE.MathUtils.damp(speed.current, target, accelerating ? 1.25 : braking ? 3.2 : 0.42, dt)
-    if (usingNitro) {
-      nitro.current = Math.max(0, nitro.current - 32 * dt)
-      speed.current = Math.min(1.42, speed.current + dt * 0.75)
-    } else nitro.current = Math.min(100, nitro.current + 10 * dt)
+    if (usingNitro) nitro.current = Math.max(0, nitro.current - 32 * dt)
+    else nitro.current = Math.min(100, nitro.current + 10 * dt)
     const steer = (input.right ? 1 : 0) - (input.left ? 1 : 0)
     steering.current = THREE.MathUtils.damp(steering.current, steer, 8, dt)
-    if (playerBody.current) {
-      const body = playerBody.current
-      const velocity = body.linvel()
-      const mass = 1150
-      const tireGrip = 5.2 + speed.current * 1.8
-      const lateralForce = THREE.MathUtils.clamp(steer * (10.5 + speed.current * 3.5) - velocity.x * tireGrip, -15, 15)
-      body.applyImpulse({ x: lateralForce * mass * dt, y: 0, z: 0 }, true)
-      body.applyTorqueImpulse({ x: 0, y: -steer * (520 + speed.current * 280) * dt, z: 0 }, true)
-      if (Math.abs(body.translation().x) > 4.75) body.applyImpulse({ x: -Math.sign(body.translation().x) * 22 * mass * dt, y: 0, z: 0 }, true)
-      playerX.current = body.translation().x
+    const chassis = playerBody.current
+    if (chassis && vehicle.current) {
+      const velocity = chassis.linvel()
+      const forwardSpeed = Math.abs(vehicle.current.currentVehicleSpeed())
+      speed.current = THREE.MathUtils.clamp(forwardSpeed / 63.3, 0, 1.42)
+      const speedLimit = usingNitro ? 76 : 63.3
+      const powerFalloff = THREE.MathUtils.clamp(1 - forwardSpeed / speedLimit, 0.12, 1)
+      const engineForce = accelerating ? (usingNitro ? 6200 : 4600) * powerFalloff : 0
+      const steerAngle = -steering.current * (0.43 - Math.min(speed.current, 1) * 0.16)
+      vehicle.current.setWheelSteering(0, steerAngle)
+      vehicle.current.setWheelSteering(1, steerAngle)
+      vehicle.current.setWheelEngineForce(0, 0)
+      vehicle.current.setWheelEngineForce(1, 0)
+      vehicle.current.setWheelEngineForce(2, engineForce)
+      vehicle.current.setWheelEngineForce(3, engineForce)
+      for (let i = 0; i < 4; i++) vehicle.current.setWheelBrake(i, braking ? 1650 : 0)
+      chassis.addForce({ x: 0, y: 0, z: velocity.z > 0 ? -velocity.z * 90 : Math.abs(velocity.z) * 90 }, true)
+      playerX.current = chassis.translation().x
+      playerZ.current = chassis.translation().z
       lateralVelocity.current = velocity.x
     }
     if (player.current) {
-      player.current.rotation.z = THREE.MathUtils.damp(player.current.rotation.z, -steering.current * 0.11 - lateralVelocity.current * 0.018, 5, dt)
-      player.current.position.y = Math.sin(elapsed.current * (8 + speed.current * 8)) * 0.012
+      player.current.rotation.z = THREE.MathUtils.damp(player.current.rotation.z, -steering.current * 0.075, 5, dt)
+      player.current.position.y = 0.13 + Math.sin(elapsed.current * (8 + speed.current * 8)) * 0.006
     }
-    const flow = (3 + speed.current * 44) * dt
-    roadMotion.current = 3 + speed.current * 44
-    distance.current += speed.current * dt * 0.052
-    points.current += speed.current * dt * (usingNitro ? 42 : 25)
+    const flow = speed.current * 63.3 * dt
+    roadMotion.current = flow / Math.max(dt, 0.0001)
+    distance.current += flow / 1000
+    points.current += flow * (usingNitro ? 1.5 : 1.0)
     traffic.current.forEach(car => {
       car.z += flow * car.speed
-      if (car.z > 13) {
-        car.z = -145 - Math.random() * 65
+      if (car.z > playerZ.current + 13) {
+        car.z = playerZ.current - 145 - Math.random() * 65
         car.lane = Math.floor(Math.random() * 3)
         car.near = false
       }
       const dx = Math.abs(LANES[car.lane] - playerX.current)
-      const dz = Math.abs(car.z - 3.4)
+      const dz = Math.abs(car.z - playerZ.current)
       if (dx < 1.55 && dz < 2.35) onCrash()
       if (dx < 2.45 && dx > 1.55 && dz < 1.4 && !car.near) {
         car.near = true
@@ -229,11 +278,11 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     })
     camera.position.x = THREE.MathUtils.damp(camera.position.x, playerX.current * 0.38, 2.2, dt)
     camera.position.y = THREE.MathUtils.damp(camera.position.y, 5.15 + speed.current * 0.55 + (usingNitro ? 0.22 : 0), 2, dt)
-    camera.position.z = 10.8 + speed.current * 0.65
+    camera.position.z = playerZ.current + 10.8 + speed.current * 0.65
     camera.rotation.z = THREE.MathUtils.damp(camera.rotation.z, -steering.current * 0.025, 2.5, dt)
     camera.fov = THREE.MathUtils.damp(camera.fov, 55 + speed.current * 13 + (usingNitro ? 5 : 0), 2.5, dt)
     camera.updateProjectionMatrix()
-    camera.lookAt(playerX.current * 0.16, 0.28, -8.5)
+    camera.lookAt(playerX.current * 0.16, 0.28, playerZ.current - 8.5)
     report.current += dt
     if (report.current > 0.09) {
       report.current = 0
@@ -248,10 +297,10 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     <directionalLight position={[-12, 18, 10]} intensity={3.2} castShadow shadow-mapSize={[2048, 2048]} />
     <spotLight position={[0, 12, 1]} intensity={2.5} angle={0.45} penumbra={0.8} distance={35} color="#e9ffd0" />
     <Stars radius={100} depth={45} count={700} factor={2} saturation={0} fade speed={0.15} />
-    <RigidBody type="fixed" colliders={false}><CuboidCollider position={[0, -0.16, -980]} args={[130, 0.16, 1000]} friction={1.1} /></RigidBody>
+    <RigidBody type="fixed" colliders={false}><CuboidCollider position={[0, -0.16, 0]} args={[130, 0.16, 100000]} friction={1.1} /></RigidBody>
     <Road motion={roadMotion} />
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
-    <RigidBody ref={playerBody} colliders={false} position={[0, 0.08, 3.4]} mass={1150} linearDamping={0.08} angularDamping={4.2} enabledRotations={[false, true, false]} canSleep={false}>
+    <RigidBody ref={playerBody} colliders={false} position={[0, -0.13, 3.4]} rotation={[0, Math.PI, 0]} mass={1150} linearDamping={0.22} angularDamping={1.4} enabledRotations={[false, true, false]} canSleep={false}>
       <CuboidCollider position={[0, 0.55, 0]} args={[0.9, 0.42, 1.86]} friction={1.05} restitution={0.02} />
       <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar steer={steering.current} speed={speed.current} /></Suspense></group>
     </RigidBody>
