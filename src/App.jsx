@@ -71,7 +71,6 @@ function Road() {
     {lights.map((z, i) => [-1, 1].map(side => <group key={i + '-' + side} position={[side * 7.8, 0, z]}>
       <mesh position={[0, 1.5, 0]}><cylinderGeometry args={[0.055, 0.08, 3, 8]} /><meshStandardMaterial color="#647178" metalness={0.7} /></mesh>
       <mesh position={[-side * 0.38, 3, 0]}><boxGeometry args={[0.9, 0.1, 0.18]} /><meshStandardMaterial color="#7d8a8e" metalness={0.7} /></mesh>
-      <pointLight position={[-side * 0.38, 2.9, 0]} color="#d8f1df" intensity={0.45} distance={8} />
     </group>))}
     <Roadside />
   </group>
@@ -97,7 +96,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     color: ['#d95042', '#e1e5e2', '#3986a8', '#d4a13f', '#7864a7', '#202a31'][i % 6],
     speed: 0.78 + (i % 4) * 0.075, near: false,
   })), [])
-  useEffect(() => { traffic.current = laneTraffic }, [laneTraffic])
+  if (traffic.current.length === 0) traffic.current = laneTraffic
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.04)
     if (!active) return
@@ -129,7 +128,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
         car.lane = Math.floor(Math.random() * 3)
         car.near = false
       }
-      const dx = Math.abs(car.x - playerX.current)
+      const dx = Math.abs(LANES[car.lane] - playerX.current)
       const dz = Math.abs(car.z - 3.4)
       if (dx < 1.55 && dz < 2.35) onCrash()
       if (dx < 2.45 && dx > 1.55 && dz < 1.4 && !car.near) {
@@ -201,15 +200,12 @@ export default function App() {
   const crash = useCallback(() => {
     setScreen(current => {
       if (current !== 'playing') return current
-      setStats(currentStats => {
-        const nextBest = Math.max(best, currentStats.score)
-        if (nextBest > best) { localStorage.setItem(BEST_KEY, String(nextBest)); setBest(nextBest) }
-        return currentStats
-      })
+      const nextBest = Math.max(best, stats.score)
+      if (nextBest > best) { localStorage.setItem(BEST_KEY, String(nextBest)); setBest(nextBest) }
       beep(115, 0.3)
       return 'over'
     })
-  }, [best, beep])
+  }, [best, beep, stats.score])
 
   useEffect(() => {
     const map = { ArrowLeft: 'left', a: 'left', ArrowRight: 'right', d: 'right', ArrowUp: 'up', w: 'up', ArrowDown: 'down', s: 'down', ' ': 'nitro' }
