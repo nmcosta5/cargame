@@ -132,6 +132,15 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     speed: 0.72 + (i % 5) * 0.085, size: i % 4 === 0 ? 0.94 : 0.82, near: false,
   })), [])
   if (traffic.current.length === 0) traffic.current = laneTraffic
+  useEffect(() => {
+    if (!active || !playerBody.current) return
+    playerBody.current.setTranslation({ x: 0, y: -0.13, z: 3.4 }, true)
+    playerBody.current.setLinvel({ x: 0, y: 0, z: 0 }, true)
+    playerBody.current.setAngvel({ x: 0, y: 0, z: 0 }, true)
+    playerBody.current.setRotation({ x: 0, y: 0, z: 0, w: 1 }, true)
+    playerX.current = 0
+    lateralVelocity.current = 0
+  }, [active])
   useFrame((state, delta) => {
     const dt = Math.min(delta, 0.04)
     if (!active) { roadMotion.current = 0; return }
@@ -209,7 +218,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost }) {
     {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
     <RigidBody ref={playerBody} colliders={false} position={[0, 0.08, 3.4]} mass={1150} linearDamping={0.08} angularDamping={4.2} enabledRotations={[false, true, false]} canSleep={false}>
       <CuboidCollider position={[0, 0.55, 0]} args={[0.9, 0.42, 1.86]} friction={1.05} restitution={0.02} />
-      <group ref={player}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar /></Suspense></group>
+      <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar /></Suspense></group>
     </RigidBody>
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.095, 0]}><planeGeometry args={[12, 220]} /><meshBasicMaterial color="#000" transparent opacity={0.001} /></mesh>
     {boost && <pointLight position={[0, 1, 4]} color="#aaff58" intensity={3} distance={8} />}
