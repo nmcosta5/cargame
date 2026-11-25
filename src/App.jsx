@@ -213,7 +213,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetK
     }
   }, [world])
   useBeforePhysicsStep(() => {
-    if (vehicle.current && active) vehicle.current.updateVehicle(1 / 60, rapier.QueryFilterFlags.EXCLUDE_DYNAMIC)
+    if (vehicle.current && active) vehicle.current.updateVehicle(1 / 60, rapier.QueryFilterFlags.EXCLUDE_DYNAMIC | rapier.QueryFilterFlags.EXCLUDE_KINEMATIC)
   })
   useEffect(() => {
     if (!playerBody.current) return
