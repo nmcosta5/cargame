@@ -131,35 +131,33 @@ function Road({ motion }) {
 function DetailedTrafficCar({ car }) {
   const { scene } = useGLTF(CAR_MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
-  const group = useRef()
+  const body = useRef()
   const wheelNames = ['Wheel_FL', 'Wheel_FR', 'Wheel_RL', 'Wheel_RR']
   const wheels = useMemo(() => wheelNames.map(name => model.getObjectByName(name)), [model])
   const spin = useRef(0)
   useFrame((_, delta) => {
-    if (group.current) {
-      group.current.position.x = LANES[car.lane]
-      group.current.position.z = car.z
-    }
+    body.current?.setNextKinematicTranslation({ x: LANES[car.lane], y: -0.13, z: car.z })
     spin.current += delta * (car.speed * 34)
     wheels.forEach((wheel, index) => {
       if (!wheel) return
       wheel.rotation.order = 'YXZ'
       wheel.rotation.x = index % 2 ? -spin.current : spin.current
     })
-  })
-  return <group ref={group} scale={0.76}><primitive object={model} /></group>
+  }, -2)
+  return <RigidBody ref={body} type="kinematicPosition" colliders={false} position={[LANES[car.lane], -0.13, car.z]}>
+    <CuboidCollider position={[0, 0.72, 0]} args={[0.9, 0.28, 1.86]} friction={0.85} restitution={0.08} />
+    <group position={[0, 0.13, 0]} scale={0.76}><primitive object={model} /></group>
+  </RigidBody>
 }
-
 function TrafficCar({ car }) {
-  if (car.id % 6 === 0) return <DetailedTrafficCar car={car} />
-  const group = useRef()
+  const body = useRef()
   useFrame(() => {
-    if (group.current) {
-      group.current.position.x = LANES[car.lane]
-      group.current.position.z = car.z
-    }
-  })
-  return <group ref={group} scale={0.82}><CarModel color={car.color} /></group>
+    body.current?.setNextKinematicTranslation({ x: LANES[car.lane], y: -0.13, z: car.z })
+  }, -2)
+  return <RigidBody ref={body} type="kinematicPosition" colliders={false} position={[LANES[car.lane], -0.13, car.z]}>
+    <CuboidCollider position={[0, 0.72, 0]} args={[0.9, 0.28, 1.86]} friction={0.85} restitution={0.08} />
+    <group position={[0, 0.13, 0]} rotation={[0, Math.PI, 0]} scale={0.82}><CarModel color={car.color} /></group>
+  </RigidBody>
 }
 
 function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetKey }) {
@@ -322,7 +320,7 @@ function GameWorld({ active, controls, onStats, onCrash, boost, setBoost, resetK
     <Stars radius={100} depth={45} count={700} factor={2} saturation={0} fade speed={0.15} />
     <RigidBody type="fixed" colliders={false}><CuboidCollider position={[0, -0.16, 0]} args={[130, 0.16, 100000]} friction={1.1} /><CuboidCollider position={[-7.25, 0.82, 0]} args={[0.08, 0.12, 100000]} friction={0.85} restitution={0.12} /><CuboidCollider position={[7.25, 0.82, 0]} args={[0.08, 0.12, 100000]} friction={0.85} restitution={0.12} /></RigidBody>
     <Road motion={roadMotion} />
-    {traffic.current.map(car => <TrafficCar key={car.id} car={car} />)}
+    {traffic.current.map(car => car.id % 6 === 0 ? <DetailedTrafficCar key={car.id} car={car} /> : <TrafficCar key={car.id} car={car} />)}
     <RigidBody ref={playerBody} colliders={false} position={[0, -0.13, 3.4]} rotation={[0, Math.PI, 0]} mass={1150} linearDamping={0.22} angularDamping={1.4} enabledRotations={[false, true, false]} canSleep={false}>
       <CuboidCollider position={[0, 0.72, 0]} args={[0.9, 0.28, 1.86]} friction={1.05} restitution={0.02} />
       <group ref={player} position={[0, 0.13, 0]}><Suspense fallback={<CarModel player steer={steering.current} />}><DetailedPlayerCar steer={steering.current} speed={speed.current} vehicleRef={vehicle} /></Suspense></group>
